@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCU8nv8OBY-q9t_kwg93oaBXAoimy3U1hc</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1031722414025</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.myakyaka</string>
+	<key>PROJECT_ID</key>
+	<string>myakyaka</string>
+	<key>STORAGE_BUCKET</key>
+	<string>myakyaka.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1031722414025:ios:ce6cde3d77bbbc64a40218</string>
+</dict>
+</plist>

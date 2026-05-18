@@ -1,103 +1,52 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { HeaderButton, Text } from '@react-navigation/elements';
-import {
-  createStaticNavigation,
-  StaticParamList,
-} from '@react-navigation/native';
+/**
+ * Navigation — MyAkyaka ana navigasyon yapısı
+ * Bottom Tabs (Ana Sayfa, Keşfet, Favoriler, Profil) + Stack (BusinessDetail)
+ */
+import React from 'react';
+import { NavigationContainer, NavigationContainerProps } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image } from 'react-native';
-import bell from '../assets/bell.png';
-import newspaper from '../assets/newspaper.png';
-import { Home } from './screens/Home';
-import { Profile } from './screens/Profile';
-import { Settings } from './screens/Settings';
-import { Updates } from './screens/Updates';
-import { NotFound } from './screens/NotFound';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { HomeScreen } from '../screens/HomeScreen';
+import { ExploreScreen } from '../screens/ExploreScreen';
+import { BusinessDetailScreen } from '../screens/BusinessDetailScreen';
+import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { CustomTabBar } from '../components/CustomTabBar';
+import { RootStackParamList, MainTabParamList } from '../types';
 
-const HomeTabs = createBottomTabNavigator({
-  screens: {
-    Home: {
-      screen: Home,
-      options: {
-        title: 'Feed',
-        tabBarIcon: ({ color, size }) => (
-          <Image
-            source={newspaper}
-            tintColor={color}
-            style={{
-              width: size,
-              height: size,
-            }}
-          />
-        ),
-      },
-    },
-    Updates: {
-      screen: Updates,
-      options: {
-        tabBarIcon: ({ color, size }) => (
-          <Image
-            source={bell}
-            tintColor={color}
-            style={{
-              width: size,
-              height: size,
-            }}
-          />
-        ),
-      },
-    },
-  },
-});
+const Tab = createBottomTabNavigator<MainTabParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const RootStack = createNativeStackNavigator({
-  screens: {
-    HomeTabs: {
-      screen: HomeTabs,
-      options: {
-        title: 'Home',
-        headerShown: false,
-      },
-    },
-    Profile: {
-      screen: Profile,
-      linking: {
-        path: ':user(@[a-zA-Z0-9-_]+)',
-        parse: {
-          user: (value) => value.replace(/^@/, ''),
-        },
-        stringify: {
-          user: (value) => `@${value}`,
-        },
-      },
-    },
-    Settings: {
-      screen: Settings,
-      options: ({ navigation }) => ({
-        presentation: 'modal',
-        headerRight: () => (
-          <HeaderButton onPress={navigation.goBack}>
-            <Text>Close</Text>
-          </HeaderButton>
-        ),
-      }),
-    },
-    NotFound: {
-      screen: NotFound,
-      options: {
-        title: '404',
-      },
-      linking: {
-        path: '*',
-      },
-    },
-  },
-});
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Explore" component={ExploreScreen} />
+      <Tab.Screen name="Favorites" component={FavoritesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
-export const Navigation = createStaticNavigation(RootStack);
+interface Props {
+  theme?: NavigationContainerProps['theme'];
+  onReady?: () => void;
+}
 
-type RootStackType = typeof RootStack;
-
-declare module '@react-navigation/core' {
-  interface RootNavigator extends RootStackType {}
+export function Navigation({ theme, onReady }: Props) {
+  return (
+    <NavigationContainer theme={theme} onReady={onReady}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen
+          name="BusinessDetail"
+          component={BusinessDetailScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }

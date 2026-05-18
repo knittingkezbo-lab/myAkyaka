@@ -1,37 +1,29 @@
-import { Assets as NavigationAssets } from '@react-navigation/elements';
+/**
+ * MyAkyaka — App Entry Component
+ * Splash screen yönetimi ve tema ayarları
+ */
 import { DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { Asset } from 'expo-asset';
-import { createURL } from 'expo-linking';
 import * as SplashScreen from 'expo-splash-screen';
-import * as React from 'react';
-import { useColorScheme } from 'react-native';
+import React from 'react';
+import { useColorScheme, StatusBar } from 'react-native';
 import { Navigation } from './navigation';
-
-Asset.loadAsync([
-  ...NavigationAssets,
-  require('./assets/newspaper.png'),
-  require('./assets/bell.png'),
-]);
 
 SplashScreen.preventAutoHideAsync();
 
-const prefix = createURL('/');
-
 export function App() {
   const colorScheme = useColorScheme();
-
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
+  // MyAkyaka her zaman light tema kullanır (tasarım sistemi light-mode odaklı)
+  const theme = DefaultTheme;
 
   return (
-    <Navigation
-      theme={theme}
-      linking={{
-        enabled: 'auto',
-        prefixes: [prefix],
-      }}
-      onReady={() => {
-        SplashScreen.hideAsync();
-      }}
-    />
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <Navigation
+        theme={theme}
+        onReady={() => {
+          SplashScreen.hideAsync();
+        }}
+      />
+    </>
   );
 }
