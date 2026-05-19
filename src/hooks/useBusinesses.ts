@@ -1,12 +1,6 @@
-/**
- * useBusinesses — İşletme verilerini yöneten custom hook
- * 
- * Google Sheets'ten veri çeker.
- * Kategori filtreleme ve arama desteği.
- */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Business, CategoryId } from '../types';
-import { fetchBusinessesFromSheet } from '../services/sheetService';
+import { subscribeToBusinesses } from '../services/firestoreService';
 
 interface UseBusinessesResult {
   businesses: Business[];
@@ -15,7 +9,6 @@ interface UseBusinessesResult {
   error: string | null;
   filterByCategory: (category: CategoryId | null) => Business[];
   searchBusinesses: (query: string) => Business[];
-  refreshData: () => Promise<void>;
 }
 
 export function useBusinesses(): UseBusinessesResult {
@@ -23,23 +16,22 @@ export function useBusinesses(): UseBusinessesResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchBusinessesFromSheet();
-      setBusinesses(data);
-    } catch (err: any) {
-      console.error('Google Sheets veri çekme hatası:', err);
-      setError(err.message || 'Veri çekilirken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    setLoading(true);
+    const unsubscribe = subscribeToBusinesses(
+      (data) => {
+        setBusinesses(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Firestore işletme çekme hatası:', err);
+        setError(err.message || 'İşletmeler yüklenirken bir hata oluştu.');
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   // Öne çıkan işletmeler
   const featuredBusinesses = useMemo(
@@ -51,6 +43,7 @@ export function useBusinesses(): UseBusinessesResult {
   const filterByCategory = useCallback(
     (category: CategoryId | null): Business[] => {
       if (!category) return businesses;
+      // category id ile eşleştirme yapıyoruz. Firestore'da nasıl kaydedildiyse o şekilde.
       return businesses.filter((b) => b.category === category);
     },
     [businesses]
@@ -65,7 +58,7 @@ export function useBusinesses(): UseBusinessesResult {
         (b) =>
           b.name.toLowerCase().includes(q) ||
           b.description.toLowerCase().includes(q) ||
-          b.tags.some((t) => t.toLowerCase().includes(q))
+          (b.tags && b.tags.some((t) => t.toLowerCase().includes(q)))
       );
     },
     [businesses]
@@ -78,6 +71,5 @@ export function useBusinesses(): UseBusinessesResult {
     error,
     filterByCategory,
     searchBusinesses,
-    refreshData: loadData,
   };
 }

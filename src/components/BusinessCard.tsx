@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Business } from '../types';
-import { getCategoryById } from '../constants/categories';
+import { useCategoriesContext } from '../contexts/CategoriesContext';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export function BusinessCard({ business, onPress, isFavorite = false, onToggleFavorite }: Props) {
+  const { getCategoryById } = useCategoriesContext();
   const category = getCategoryById(business.category);
 
   return (

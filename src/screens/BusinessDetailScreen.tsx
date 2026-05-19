@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { ActionButton } from '../components/ActionButton';
-import { getCategoryById } from '../constants/categories';
+import { BookingModal } from '../components/BookingModal';
+import { useCategoriesContext } from '../contexts/CategoriesContext';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { RootStackParamList } from '../types';
 
@@ -20,7 +21,9 @@ export function BusinessDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<DetailRoute>();
   const { business } = route.params;
+  const { getCategoryById } = useCategoriesContext();
   const category = getCategoryById(business.category);
+  const [isBookingModalVisible, setIsBookingModalVisible] = React.useState(false);
 
   const handleCall = () => {
     if (business.phone) Linking.openURL(`tel:${business.phone}`);
@@ -88,8 +91,29 @@ export function BusinessDetailScreen() {
             <ActionButton title="Hemen Ulaş 📞" onPress={handleCall} style={{ flex: 1, marginRight: 8 }} />
             <ActionButton title="Yol Tarifi 🗺️" onPress={handleDirections} style={{ flex: 1 }} />
           </View>
+          
+          {/* Rezervasyon Butonu */}
+          {(category?.name?.toLowerCase().includes('yeme') || 
+            category?.name?.toLowerCase().includes('aktivite') || 
+            category?.name?.toLowerCase().includes('doğa')) && (
+            <View style={styles.bookingAction}>
+              <ActionButton 
+                title="Rezervasyon Yap 📅" 
+                onPress={() => setIsBookingModalVisible(true)} 
+                style={{ backgroundColor: Colors.primary, width: '100%' }} 
+              />
+            </View>
+          )}
         </View>
       </ScrollView>
+
+      {/* Booking Modal */}
+      <BookingModal 
+        visible={isBookingModalVisible} 
+        businessId={business.id}
+        businessName={business.name}
+        onClose={() => setIsBookingModalVisible(false)} 
+      />
     </View>
   );
 }
@@ -153,5 +177,6 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.xl },
   tag: { backgroundColor: Colors.primarySoft, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   tagText: { fontSize: Typography.caption, color: Colors.primary, fontWeight: Typography.semiBold },
-  actions: { flexDirection: 'row', marginBottom: 40 },
+  actions: { flexDirection: 'row', marginBottom: Spacing.md },
+  bookingAction: { marginBottom: 40 },
 });

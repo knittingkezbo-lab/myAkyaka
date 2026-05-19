@@ -32,7 +32,8 @@
           "image": "./assets/splash-icon.png"
         }
       ],
-      "expo-image"
+      "expo-image",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

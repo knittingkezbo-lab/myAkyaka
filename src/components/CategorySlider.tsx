@@ -4,7 +4,7 @@
 import React from 'react';
 import { FlatList, View, Text, StyleSheet } from 'react-native';
 import { CategoryButton } from './CategoryButton';
-import { CATEGORIES } from '../constants/categories';
+import { useCategoriesContext } from '../contexts/CategoriesContext';
 import { Colors, Typography, Spacing } from '../constants/theme';
 
 interface Props {
@@ -13,11 +13,13 @@ interface Props {
 }
 
 export function CategorySlider({ selectedCategory, onSelectCategory }: Props) {
+  const { categories } = useCategoriesContext();
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Kategoriler</Text>
       <FlatList
-        data={CATEGORIES}
+        data={categories}
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}

@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React from 'react';
 import { useColorScheme, StatusBar } from 'react-native';
 import { Navigation } from './navigation';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -18,12 +19,14 @@ export function App() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      <Navigation
-        theme={theme}
-        onReady={() => {
-          SplashScreen.hideAsync();
-        }}
-      />
+      <CategoriesProvider>
+        <Navigation
+          theme={theme}
+          onReady={() => {
+            SplashScreen.hideAsync();
+          }}
+        />
+      </CategoriesProvider>
     </>
   );
 }

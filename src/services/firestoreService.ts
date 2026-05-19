@@ -4,7 +4,9 @@
  *
  * Koleksiyon yapısı:
  *   businesses/{businessId}  — İşletme dokümanları
+ *   categories/{categoryId}  — Kategori dokümanları
  *   users/{userId}/favorites/{businessId} — Kullanıcı favorileri
+ *   bookings/{bookingId}     — Rezervasyon talepleri
  */
 import {
   collection,
@@ -19,14 +21,17 @@ import {
   writeBatch,
   serverTimestamp,
   DocumentSnapshot,
+  addDoc,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Business, CategoryId } from '../types';
+import { Business, Category } from '../types';
 
 // === Koleksiyon referansları ===
 const BUSINESSES = 'businesses';
+const CATEGORIES = 'categories';
 const USERS = 'users';
 const FAVORITES = 'favorites';
+const BOOKINGS = 'bookings';
 
 // === İşletme verisi dönüştürücü ===
 function docToBusiness(docSnap: DocumentSnapshot): Business {
@@ -36,28 +41,56 @@ function docToBusiness(docSnap: DocumentSnapshot): Business {
     name: d.name ?? '',
     description: d.description ?? '',
     category: d.category ?? 'yeme-icme',
-    coverImage: d.coverImage ?? '',
+    coverImage: d.coverImageUrl ?? d.coverImage ?? '', // Admin panel coverImageUrl kullanıyor
     images: d.images ?? [],
     rating: d.rating ?? 0,
     reviewCount: d.reviewCount ?? 0,
-    address: d.address ?? '',
-    phone: d.phone ?? '',
+    address: d.location?.address ?? d.address ?? '',
+    phone: d.contact?.phone ?? d.phone ?? '',
     latitude: d.latitude ?? 0,
     longitude: d.longitude ?? 0,
     workingHours: d.workingHours ?? '',
     priceRange: d.priceRange ?? '₺',
     tags: d.tags ?? [],
+    isPremium: d.isPremium ?? false,
     isFeatured: d.isFeatured ?? false,
+    isApproved: d.isApproved ?? false,
+    createdAt: d.createdAt?.toMillis() ?? 0,
   };
 }
 
-// === İşletme Sorguları ===
-
-/** Tüm işletmeleri çeker */
-export async function getBusinesses(): Promise<Business[]> {
-  const snapshot = await getDocs(collection(db, BUSINESSES));
-  return snapshot.docs.map(docToBusiness);
+// === Kategori verisi dönüştürücü ===
+function docToCategory(docSnap: DocumentSnapshot): Category {
+  const d = docSnap.data() ?? {};
+  return {
+    id: docSnap.id,
+    name: d.name ?? 'Kategori',
+    icon: d.icon ?? 'leaf',
+    color: d.color ?? '#27AE60',
+    gradient: d.gradient ?? ['#27AE60', '#6FCF97'],
+  };
 }
+
+// === Kategori Sorguları ===
+/** Kategorileri gerçek zamanlı dinler */
+export function subscribeToCategories(
+  callback: (categories: Category[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  return onSnapshot(
+    collection(db, CATEGORIES),
+    (snapshot) => {
+      const categories = snapshot.docs.map(docToCategory);
+      callback(categories);
+    },
+    (error) => {
+      console.error('Firestore kategori dinleme hatası:', error);
+      onError?.(error);
+    }
+  );
+}
+
+// === İşletme Sorguları ===
 
 /** Tek işletme detayını çeker */
 export async function getBusinessById(id: string): Promise<Business | null> {
@@ -66,41 +99,30 @@ export async function getBusinessById(id: string): Promise<Business | null> {
   return docToBusiness(docSnap);
 }
 
-/** Kategoriye göre işletmeleri filtreler */
-export async function getBusinessesByCategory(
-  category: CategoryId
-): Promise<Business[]> {
-  const q = query(
-    collection(db, BUSINESSES),
-    where('category', '==', category)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(docToBusiness);
-}
-
-/** Öne çıkan işletmeleri çeker */
-export async function getFeaturedBusinesses(): Promise<Business[]> {
-  const q = query(
-    collection(db, BUSINESSES),
-    where('isFeatured', '==', true)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(docToBusiness);
-}
-
-/** İşletmeleri gerçek zamanlı dinler (real-time listener) */
+/** İşletmeleri gerçek zamanlı dinler (Sadece Onaylılar) */
 export function subscribeToBusinesses(
   callback: (businesses: Business[]) => void,
   onError?: (error: Error) => void
 ): () => void {
+  const q = query(collection(db, BUSINESSES), where('isApproved', '==', true));
+  
   return onSnapshot(
-    collection(db, BUSINESSES),
+    q,
     (snapshot) => {
-      const businesses = snapshot.docs.map(docToBusiness);
+      let businesses = snapshot.docs.map(docToBusiness);
+      
+      // Client-side sorting: isPremium == true first, then createdAt desc
+      businesses.sort((a, b) => {
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        // if both are premium or both are not, sort by createdAt desc
+        return b.createdAt - a.createdAt;
+      });
+      
       callback(businesses);
     },
     (error) => {
-      console.error('Firestore dinleme hatası:', error);
+      console.error('Firestore işletme dinleme hatası:', error);
       onError?.(error);
     }
   );
@@ -147,16 +169,19 @@ export function subscribeToFavorites(
   );
 }
 
-// === Yardımcı: Mock veriyi Firestore'a yükleme ===
+// === Rezervasyon (Booking) İşlemleri ===
 
-/** Mock işletme verilerini Firestore'a toplu yazar (tek seferlik seed) */
-export async function seedBusinesses(businesses: Business[]): Promise<void> {
-  const batch = writeBatch(db);
-  businesses.forEach((b) => {
-    const { id, ...data } = b;
-    const ref = doc(db, BUSINESSES, id);
-    batch.set(ref, data);
+export async function createBooking(data: {
+  businessId: string;
+  businessName: string;
+  customerName: string;
+  customerPhone: string;
+  date: string;
+  partySize: number;
+}) {
+  await addDoc(collection(db, BOOKINGS), {
+    ...data,
+    status: 'pending',
+    createdAt: serverTimestamp(),
   });
-  await batch.commit();
-  console.log(`✅ ${businesses.length} işletme Firestore'a yazıldı.`);
 }

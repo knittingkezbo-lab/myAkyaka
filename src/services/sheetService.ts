@@ -2,7 +2,16 @@ import Papa from 'papaparse';
 import { Business, CategoryId } from '../types';
 
 // TODO: Replace with actual published Google Sheets CSV URL
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXYZ_YOUR_SHEET_ID/pub?output=csv';
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSh3Ry1wWDhNO4MiS6-LJpS7rkwrFb4JtE6Ze2cn-j1onaV4pvgTkR1Evy0VGUiHCj4A3WV3Nk1FAM7/pub?output=csv';
+
+const categoryMap: Record<string, CategoryId> = {
+  'Yeme & İçme': 'yeme-icme',
+  'Aktivite & Doğa': 'aktivite-doga',
+  'Konaklama': 'konaklama',
+  'Eğlence & Gece Hayatı': 'eglence',
+  'Alışveriş': 'alisveris',
+  'Pratik Bilgiler': 'pratik-bilgiler'
+};
 
 export async function fetchBusinessesFromSheet(): Promise<Business[]> {
   try {
@@ -23,7 +32,7 @@ export async function fetchBusinessesFromSheet(): Promise<Business[]> {
             // Kritik İş Mantığı: Onaylı_Mi "Hayır" ise Premium_Mu değeri "Hayır" kabul edilir.
             const isOnayli = String(row.Onayli_Mi || '').trim().toLowerCase() === 'evet';
             const isPremiumRaw = String(row.Premium_Mu || '').trim().toLowerCase() === 'evet';
-            
+
             // Onaylı değilse kesinlikle premium (featured) olamaz.
             const isFeatured = isOnayli && isPremiumRaw;
 

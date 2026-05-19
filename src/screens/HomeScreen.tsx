@@ -3,7 +3,7 @@
  * Header, WeatherWidget, CategorySlider, Popüler İşletmeler
  * Firestore entegrasyonu ile veri çekme (fallback: mock veri)
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { Colors, Typography, Spacing } from '../constants/theme';
 import { useBusinesses } from '../hooks/useBusinesses';
 import { useFavorites } from '../hooks/useFavorites';
 import { Business, RootStackParamList } from '../types';
+import { fetchAkyakaWeather, WeatherData } from '../services/weatherService';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -25,9 +26,27 @@ export function HomeScreen() {
   const navigation = useNavigation<NavProp>();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  // Hava durumu verileri state
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+
   // Google Sheets'ten işletmeleri çek
   const { businesses, featuredBusinesses, loading, filterByCategory } = useBusinesses();
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  useEffect(() => {
+    async function loadWeather() {
+      try {
+        const data = await fetchAkyakaWeather();
+        setWeather(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setWeatherLoading(false);
+      }
+    }
+    loadWeather();
+  }, []);
 
   // Kategori seçimine göre filtreleme
   const displayedBusinesses = selectedCategory
@@ -61,7 +80,7 @@ export function HomeScreen() {
           ListHeaderComponent={
             <>
               <Header />
-              <WeatherWidget />
+              <WeatherWidget weather={weather} loading={weatherLoading} />
               <CategorySlider
                 selectedCategory={selectedCategory}
                 onSelectCategory={handleCategorySelect}

@@ -4,13 +4,7 @@
  */
 
 /** İşletme kategorileri */
-export type CategoryId =
-  | 'yeme-icme'
-  | 'aktivite-doga'
-  | 'konaklama'
-  | 'eglence'
-  | 'alisveris'
-  | 'pratik-bilgiler';
+export type CategoryId = string;
 
 /** Kategori tanımı */
 export interface Category {
@@ -18,7 +12,7 @@ export interface Category {
   name: string;
   icon: string; // Ionicons icon adı
   color: string;
-  gradient: [string, string];
+  gradient: string[];
 }
 
 /** İşletme verisi */
@@ -36,9 +30,12 @@ export interface Business {
   latitude: number;
   longitude: number;
   workingHours: string;
-  priceRange: '₺' | '₺₺' | '₺₺₺';
+  priceRange: string;
   tags: string[];
   isFeatured: boolean;
+  isPremium: boolean;
+  isApproved: boolean;
+  createdAt: number;
 }
 
 /** Hava durumu verisi (mock) */
