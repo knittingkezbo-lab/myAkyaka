@@ -2,7 +2,7 @@
 
 // NOT: Lütfen kendi OpenWeatherMap API anahtarınızı buraya girin.
 // https://openweathermap.org/api adresinden ücretsiz alabilirsiniz.
-const API_KEY: string = '489c3866dffd501afe6dd03b5215c3ec';
+const API_KEY = '489c3866dffd501afe6dd03b5215c3ec' as string;
 const AKYAKA_LAT = 37.0553;
 const AKYAKA_LON = 28.3244;
 
